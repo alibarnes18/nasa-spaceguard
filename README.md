@@ -74,11 +74,14 @@ python -m ipykernel install --user --name=spaceguard-venv --display-name "Python
 
 - [x] **Stage 0: Environment Setup & Scaffolding**
 - [x] **Stage 1: Data Engineering & Exploratory Data Analysis (EDA)**
-  - Confirmed 82 channels: 55 SMAP and 27 MSL.
-  - Identified variable input feature dimensions across channels ($D=25$ to $D=55$).
-  - Explored telemetry vs. command columns and point vs. contextual anomalies.
-  - Documented strict time-series data leakage prevention protocols.
-- [ ] **Stage 2: Statistical Baseline (Z-score & Event Scoring)**
+- [x] **Stage 2: Statistical Baseline (Z-score & Event Scoring)**
+  - Implemented train-only mean and standard deviation Z-score pipeline.
+  - Developed NASA JPL compliant event-level overlap evaluation metrics.
+  - Established initial benchmark across all 82 channels (105 ground-truth events):
+    - Overall Recall: 55.24%
+    - Overall Precision: 28.58%
+    - Total False Alarms: 1,132
+  - Exported full evaluation audit to `reports/results.csv`.
 - [ ] **Stage 3: LSTM Prediction Model**
 - [ ] **Stage 4: Dynamic Thresholding & Anomaly Evaluation**
 - [ ] **Stage 5: API & Dashboard Deployment**
