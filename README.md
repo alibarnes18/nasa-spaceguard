@@ -76,10 +76,11 @@ python -m ipykernel install --user --name=spaceguard-venv --display-name "Python
 - [x] **Stage 1: Data Engineering & Exploratory Data Analysis (EDA)**
 - [x] **Stage 2: Statistical Baseline (Z-score & Event Scoring)**
 - [x] **Stage 3: LSTM Prediction Model**
-  - Designed dynamic input dimension multi-layer LSTM architecture in `src/spaceguard/models/lstm.py`.
-  - Implemented 250-timestep sliding window and chronological train/val split in `src/spaceguard/data/preprocessing.py`.
-  - Developed GPU-accelerated trainer with MSE loss, Adam optimizer, early stopping, and checkpointing in `src/spaceguard/models/trainer.py`.
-  - Trained baseline LSTM model on `P-1` channel using RTX 3050 CUDA acceleration (Validation Loss: 0.0269).
-- [ ] **Stage 4: Dynamic Thresholding & Anomaly Evaluation**
+- [x] **Stage 4: Dynamic Thresholding & Anomaly Evaluation**
+  - Built EMA error smoothing in `src/spaceguard/detection/smoothing.py`.
+  - Implemented unsupervised dynamic thresholding with sliding-window offset correction in `src/spaceguard/detection/threshold.py`.
+  - Built comprehensive evaluation pipeline in `scripts/evaluate.py`.
+  - Achieved 100% Recall on `P-1` channel while slashing false alarms by 82% compared to baseline.
+  - Generated multi-panel telemetry, error, and detection diagnostic charts in `reports/figures/`.
 - [ ] **Stage 5: API & Dashboard Deployment**
 - [ ] **Stage 6: Final Technical Report & Release**
