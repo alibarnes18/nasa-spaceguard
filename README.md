@@ -73,7 +73,11 @@ python -m ipykernel install --user --name=spaceguard-venv --display-name "Python
 ## 🗺️ Project Roadmap
 
 - [x] **Stage 0: Environment Setup & Scaffolding**
-- [ ] **Stage 1: Data Engineering & Exploratory Data Analysis (EDA)**
+- [x] **Stage 1: Data Engineering & Exploratory Data Analysis (EDA)**
+  - Confirmed 82 channels: 55 SMAP and 27 MSL.
+  - Identified variable input feature dimensions across channels ($D=25$ to $D=55$).
+  - Explored telemetry vs. command columns and point vs. contextual anomalies.
+  - Documented strict time-series data leakage prevention protocols.
 - [ ] **Stage 2: Statistical Baseline (Z-score & Event Scoring)**
 - [ ] **Stage 3: LSTM Prediction Model**
 - [ ] **Stage 4: Dynamic Thresholding & Anomaly Evaluation**
