@@ -40,3 +40,8 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Build & Distribution
+*.egg-info/
+build/
+dist/

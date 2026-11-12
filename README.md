@@ -75,14 +75,11 @@ python -m ipykernel install --user --name=spaceguard-venv --display-name "Python
 - [x] **Stage 0: Environment Setup & Scaffolding**
 - [x] **Stage 1: Data Engineering & Exploratory Data Analysis (EDA)**
 - [x] **Stage 2: Statistical Baseline (Z-score & Event Scoring)**
-  - Implemented train-only mean and standard deviation Z-score pipeline.
-  - Developed NASA JPL compliant event-level overlap evaluation metrics.
-  - Established initial benchmark across all 82 channels (105 ground-truth events):
-    - Overall Recall: 55.24%
-    - Overall Precision: 28.58%
-    - Total False Alarms: 1,132
-  - Exported full evaluation audit to `reports/results.csv`.
-- [ ] **Stage 3: LSTM Prediction Model**
+- [x] **Stage 3: LSTM Prediction Model**
+  - Designed dynamic input dimension multi-layer LSTM architecture in `src/spaceguard/models/lstm.py`.
+  - Implemented 250-timestep sliding window and chronological train/val split in `src/spaceguard/data/preprocessing.py`.
+  - Developed GPU-accelerated trainer with MSE loss, Adam optimizer, early stopping, and checkpointing in `src/spaceguard/models/trainer.py`.
+  - Trained baseline LSTM model on `P-1` channel using RTX 3050 CUDA acceleration (Validation Loss: 0.0269).
 - [ ] **Stage 4: Dynamic Thresholding & Anomaly Evaluation**
 - [ ] **Stage 5: API & Dashboard Deployment**
 - [ ] **Stage 6: Final Technical Report & Release**
