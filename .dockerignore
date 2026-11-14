@@ -1,0 +1,13 @@
+# Python cache / venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.env
+# Git / IDE artefaktları
+.git/
+.idea/
+.vscode/
+# Büyük veri / çıktılar (isteğe bağlı)
+reports/

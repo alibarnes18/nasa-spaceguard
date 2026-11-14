@@ -16,3 +16,11 @@ ipykernel>=6.29.0
 # Utilities & Configuration
 pyyaml>=6.0.0
 tqdm>=4.66.0
+
+# API & Serving
+fastapi>=0.110.0
+uvicorn>=0.28.0
+pydantic>=2.6.0
+
+# Dashboard
+streamlit>=1.32.0

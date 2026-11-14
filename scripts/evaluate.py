@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
+import joblib
 from torch.utils.data import DataLoader
+
+import sys
+sys.stdout.reconfigure(encoding="utf-8")
 
 from spaceguard.data.preprocessing import (
     TelemetryDataset,
@@ -44,6 +48,7 @@ def evaluate_channel(
     # 1. Veri boru hattını hazırla
     _, _, scaler, in_dim = prepare_channel_data(chan_id, data_dir)
 
+    
     # 2. Modeli yükle
     model = TelemetryLSTM(input_dim=in_dim).to(device)
     ckpt = torch.load(ckpt_path, map_location=device)
@@ -55,6 +60,7 @@ def evaluate_channel(
     scaled_test = raw_test.copy()
     scaled_test[:, 0] = scaler.transform(raw_test[:, [0]]).flatten()
 
+
     X_test, y_test = create_sliding_windows(scaled_test, window_size=250)
     test_loader = DataLoader(
         TelemetryDataset(X_test, y_test), batch_size=64, shuffle=False
@@ -65,36 +71,77 @@ def evaluate_channel(
     raw_errors = np.abs(y_test - y_hat)
     smoothed_errors = exponential_moving_average(raw_errors, window_size=10)
 
+    # --------------------------------------------------------------
+    # 4.1 – Hata istatistiklerini scaler nesnesine ekle
+    # --------------------------------------------------------------
+    error_mean = float(raw_errors.mean())
+    error_std  = float(raw_errors.std())
+
+    # scaler nesnesine ek attribute’lar koyuyoruz
+    scaler.error_mean = error_mean
+    scaler.error_std  = error_std
+
+    # --------------------------------------------------------------
+    # 4.2 – Scaler ve istatistikleri diske kaydet
+    # --------------------------------------------------------------
+    processed_dir = Path("data/processed")
+    processed_dir.mkdir(parents=True, exist_ok=True)   # klasör yoksa oluştur
+    scaler_path = processed_dir / "scaler.joblib"
+    joblib.dump(scaler, scaler_path)                 # aynı .joblib içinde hem scaler hem istatistikler
+
+    print(f"\n[Scaler ve hata istatistikleri kaydedildi] → {scaler_path}")
+
     # 5. Dinamik eşikleme (Unsupervised) ve ofset korumalı tespit
     epsilon = compute_dynamic_threshold(smoothed_errors, z_threshold=z_thresh)
     pred_seqs = detect_anomalies_from_errors(
         smoothed_errors, epsilon, offset=250
     )
 
+    
     # 6. NASA JPL Event-Level Metriklerini Hesapla
     df_labels = pd.read_csv(data_dir / "labeled_anomalies.csv")
     gt_seqs = ast.literal_eval(
         df_labels[df_labels["chan_id"] == chan_id]["anomaly_sequences"].iloc[0]
     )
 
-    detected_gt = sum(
-        1
-        for gt in gt_seqs
-        if any(check_overlap(gt, pred) for pred in pred_seqs)
-    )
-    valid_preds = sum(
-        1
-        for pred in pred_seqs
-        if any(check_overlap(pred, gt) for gt in gt_seqs)
-    )
+    # Build all overlapping prediction-ground-truth pairs.
+    candidate_matches = []
+
+    for pred_idx, pred in enumerate(pred_seqs):
+        for gt_idx, gt in enumerate(gt_seqs):
+            if check_overlap(pred, gt):
+                overlap_start = max(pred[0], gt[0])
+                overlap_end = min(pred[1], gt[1])
+                overlap_length = overlap_end - overlap_start + 1
+
+                candidate_matches.append(
+                    (overlap_length, pred_idx, gt_idx)
+                )
+
+    # Greedy one-to-one matching: each event can match only once.
+    candidate_matches.sort(reverse=True)
+
+    matched_preds = set()
+    matched_gts = set()
+
+    for _, pred_idx, gt_idx in candidate_matches:
+        if pred_idx not in matched_preds and gt_idx not in matched_gts:
+            matched_preds.add(pred_idx)
+            matched_gts.add(gt_idx)
+
+    detected_gt = len(matched_gts)
+    valid_preds = len(matched_preds)
+
     false_alarms = len(pred_seqs) - valid_preds
     recall = detected_gt / len(gt_seqs) if gt_seqs else 0.0
     precision = valid_preds / len(pred_seqs) if pred_seqs else 0.0
+
     f1 = (
-        2 * (precision * recall) / (precision + recall)
-        if (precision + recall)
+        2 * precision * recall / (precision + recall)
+        if precision + recall > 0
         else 0.0
     )
+
 
     print("=" * 60)
     print(f"      NASA SPACEGUARD AI - {chan_id} LSTM DEĞERLENDİRME KARNESİ      ")

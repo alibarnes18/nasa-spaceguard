@@ -70,6 +70,22 @@ python -m ipykernel install --user --name=spaceguard-venv --display-name "Python
 
 ---
 
+
+
+# clone
+git clone <repo>
+cd Nasa-SpaceGuard
+
+# virtual env
+python -m venv .venv
+.venv\Scripts\activate
+
+# deps
+pip install -r requirements.txt
+
+# run API
+uvicorn api.main:app --host 127.0.0.1 --port 8000
+
 ## 🗺️ Project Roadmap
 
 - [x] **Stage 0: Environment Setup & Scaffolding**
