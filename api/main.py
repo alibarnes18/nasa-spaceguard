@@ -71,6 +71,7 @@ class TelemetryWindow(BaseModel):
     `data` must be a list of 250 rows, each row containing `in_dim` features.
     """
     data: List[List[float]] = Field(..., description="2‑D list with shape (250, in_dim)")
+    true_next: float = Field(..., description="Raw telemetry value for the timestep immediately following the window")
 
     @validator("data")
     def check_shape(cls, v):
@@ -147,24 +148,26 @@ def predict(window: TelemetryWindow):
         raise HTTPException(status_code=500, detail=f"Model inference failed: {exc}")
 
     # ------------------------------------------------------------------
-    # Compute absolute error for the *last* timestep of the window
-    # (ground‑truth = real telemetry at step 250)
+    # Compute absolute error using the provided true_next value
+    # Scale the true_next telemetry value using the same scaler as during training
     # ------------------------------------------------------------------
-    true_val = scaled_np[-1, 0]                     # already scaled
-    error = float(abs(true_val - pred_val))
+    true_next_raw = np.array([[window.true_next]], dtype=np.float32)
+    true_next_scaled = scaler.transform(true_next_raw).flatten()[0]
+    error = float(abs(true_next_scaled - pred_val))
 
     # ------------------------------------------------------------------
-    # EMA smoothing (window size 10) – same as evaluation script
+    # EMA smoothing (window size 10) – placeholder for client aggregation
     # ------------------------------------------------------------------
-    smoothed_error = error  # placeholder – downstream client can apply EMA over a sequence
+    smoothed_error = error
 
     # ------------------------------------------------------------------
-    # Dynamic threshold (z‑score based)
+    # Dynamic threshold (z‑score based) using scaler‑stored statistics
     # ------------------------------------------------------------------
     error_mean = getattr(scaler, "error_mean", 0.0)
     error_std = getattr(scaler, "error_std", 1.0)
     z_thresh = 3.0
-    epsilon = compute_dynamic_threshold(np.array([error]), z_threshold=z_thresh)
+    epsilon = error_mean + z_thresh * error_std
+
 
     is_anomaly = error > epsilon
 

@@ -21,7 +21,10 @@ def test_health():
 
 def test_predict():
     payload = load_payload()
-    window = TelemetryWindow(data=payload["data"])
+    # Add true_next field (use the last value of the data as a placeholder)
+    if "true_next" not in payload:
+        payload["true_next"] = payload["data"][-1][0]
+    window = TelemetryWindow(data=payload["data"], true_next=payload["true_next"])
     res = predict(window)
     for key in ["prediction", "true_value", "error", "threshold", "is_anomaly", "z_thresh"]:
         assert key in res, f"Missing key {key}"

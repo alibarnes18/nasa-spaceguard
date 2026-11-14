@@ -1,4 +1,5 @@
 import ast
+import networkx as nx
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
@@ -118,7 +119,31 @@ def evaluate_channel(
                     (overlap_length, pred_idx, gt_idx)
                 )
 
-    # Greedy one-to-one matching: each event can match only once.
+    # Use maximum‑weight bipartite matching for one‑to‑one assignment
+    # Build a bipartite graph where left nodes are predictions, right nodes are ground‑truth events.
+    G = nx.Graph()
+    pred_nodes = [f"p{idx}" for idx in range(len(pred_seqs))]
+    gt_nodes   = [f"g{idx}" for idx in range(len(gt_seqs))]
+    G.add_nodes_from(pred_nodes, bipartite=0)
+    G.add_nodes_from(gt_nodes, bipartite=1)
+    for pred_idx, pred in enumerate(pred_seqs):
+        for gt_idx, gt in enumerate(gt_seqs):
+            if check_overlap(pred, gt):
+                overlap_start = max(pred[0], gt[0])
+                overlap_end   = min(pred[1], gt[1])
+                overlap_len   = overlap_end - overlap_start + 1
+                G.add_edge(f"p{pred_idx}", f"g{gt_idx}", weight=overlap_len)
+    # Maximum weight matching (returns set of edges)
+    matched_edges = nx.algorithms.matching.max_weight_matching(G, maxcardinality=True)
+    matched_preds = {int(e[0][1:]) for e in matched_edges}
+    matched_gts   = {int(e[1][1:]) for e in matched_edges}
+    # In case NetworkX returns edges in opposite order
+    if not matched_preds:
+        matched_preds = {int(e[1][1:]) for e in matched_edges}
+        matched_gts   = {int(e[0][1:]) for e in matched_edges}
+    detected_gt = len(matched_gts)
+    valid_preds = len(matched_preds)
+
     candidate_matches.sort(reverse=True)
 
     matched_preds = set()
